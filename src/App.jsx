@@ -64,14 +64,13 @@ const App = () => {
     setStock([newItem, ...stock]);
   };
 
-  // 画像として書き出し（全面グラデーション・文字なし）
+  // 画像として書き出し
   const downloadImage = () => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     canvas.width = 1200;
     canvas.height = 1800;
 
-    // 1. 全面グラデーションの描画
     const lingrad = ctx.createLinearGradient(
       canvas.width/2 + Math.cos((angle-90) * Math.PI/180) * canvas.height/2,
       canvas.height/2 + Math.sin((angle-90) * Math.PI/180) * canvas.height/2,
@@ -86,7 +85,6 @@ const App = () => {
     ctx.fillStyle = lingrad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 2. ノイズの描画
     if (noise > 0) {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
@@ -99,7 +97,6 @@ const App = () => {
       ctx.putImageData(imageData, 0, 0);
     }
 
-    // 書き出し（ファイル名に title を使用）
     const link = document.createElement('a');
     const fileName = title ? title.replace(/[^a-z0-9]/gi, '_') : 'GraGra_Output';
     link.download = `${fileName}.png`;
@@ -115,9 +112,16 @@ const App = () => {
         <div className="p-8 space-y-10">
           
           <div className="space-y-6">
-            <div className="flex items-center gap-2 text-white/40 mb-2">
-              {/* Tマークを削除しました */}
-              <span className="text-[10px] tracking-[0.2em] font-bold">GraGra-Maker by KUMAnoTE </span>
+            <div className="mb-2">
+              <a 
+                href="https://kuma-no-te.jp/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-baseline text-white/40 hover:text-white/80 transition-colors group"
+              >
+                <span className="text-[14px] font-bold tracking-[0.05em]">GraGra-Maker</span>
+                <span className="text-[10px] font-bold tracking-[0.2em] ml-2 opacity-70">by KUMAnoTE</span>
+              </a>
             </div>
             <div className="space-y-4">
               <div className="group">
@@ -240,7 +244,7 @@ const App = () => {
         </div>
       </aside>
 
-      {/* 右側：メインプレビュー（全面グラデーション） */}
+      {/* 右側：メインプレビュー */}
       <main className="flex-1 relative flex items-center justify-center p-12 overflow-hidden bg-[#050505]">
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(white 1px, transparent 0)`, backgroundSize: `24px 24px` }}></div>
 
