@@ -101,14 +101,14 @@ const App = () => {
 
     // 書き出し（ファイル名に title を使用）
     const link = document.createElement('a');
-    const fileName = title.replace(/[^a-z0-9]/gi, '_').toUpperCase(); // 安全なファイル名に変換
+    const fileName = title ? title.replace(/[^a-z0-9]/gi, '_') : 'GraGra_Output';
     link.download = `${fileName}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   };
 
   return (
-    <div className="flex h-screen bg-[#050505] text-[#e0e0e0] font-sans overflow-hidden">
+    <div className="flex h-screen bg-[#050505] text-[#e0e0e0] font-sans overflow-hidden select-none" style={{ fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif' }}>
       
       {/* 左側：コントロールパネル */}
       <aside className="w-[380px] h-full border-r border-white/10 flex flex-col bg-[#0a0a0a] z-10 overflow-y-auto custom-scrollbar">
@@ -116,16 +116,16 @@ const App = () => {
           
           <div className="space-y-6">
             <div className="flex items-center gap-2 text-white/40 mb-2">
-              <Type size={14} />
-              <span className="text-[10px] tracking-[0.2em] font-bold uppercase">KUMAnoTE GraGra-Maker</span>
+              {/* Tマークを削除しました */}
+              <span className="text-[10px] tracking-[0.2em] font-bold">GraGra-Maker by KUMAnoTE </span>
             </div>
             <div className="space-y-4">
               <div className="group">
-                <label className="text-[9px] text-white/30 uppercase tracking-tighter block mb-1">Title (Filename)</label>
+                <label className="text-[9px] text-white/30 tracking-tight block mb-1">Title (Filename)</label>
                 <input 
                   type="text" value={title} onChange={(e) => setTitle(e.target.value)}
                   className="w-full bg-transparent border-b border-white/10 py-1 text-sm focus:border-white outline-none transition-colors"
-                  placeholder="FILENAME HERE"
+                  placeholder=""
                 />
               </div>
             </div>
@@ -135,7 +135,7 @@ const App = () => {
             <div className="flex items-center justify-between text-white/40 mb-2">
               <div className="flex items-center gap-2">
                 <MoveHorizontal size={14} />
-                <span className="text-[10px] tracking-[0.2em] font-bold uppercase">Angle</span>
+                <span className="text-[10px] tracking-[0.2em] font-bold">Angle</span>
               </div>
               <span className="text-xs text-white/80">{angle}°</span>
             </div>
@@ -150,7 +150,7 @@ const App = () => {
             <div className="flex items-center justify-between text-white/40 mb-2">
               <div className="flex items-center gap-2">
                 <Sparkles size={14} />
-                <span className="text-[10px] tracking-[0.2em] font-bold uppercase">Noise</span>
+                <span className="text-[10px] tracking-[0.2em] font-bold">Noise</span>
               </div>
               <span className="text-xs text-white/80">{(noise * 100).toFixed(0)}%</span>
             </div>
@@ -165,7 +165,7 @@ const App = () => {
             <div className="flex items-center justify-between text-white/40 mb-2">
               <div className="flex items-center gap-2">
                 <Palette size={14} />
-                <span className="text-[10px] tracking-[0.2em] font-bold uppercase">Colors</span>
+                <span className="text-[10px] tracking-[0.2em] font-bold">Colors</span>
               </div>
               <button onClick={addColor} className="hover:text-white transition-colors">
                 <Plus size={16} />
@@ -218,16 +218,16 @@ const App = () => {
 
           <div className="pt-4 space-y-3">
             <button onClick={addToStock} className="w-full py-4 bg-white text-black text-xs font-bold rounded-full hover:bg-[#ccc] transition-all flex items-center justify-center gap-2">
-              <Save size={14} /> SAVE TO STOCK
+              <Save size={14} /> Save to Stock
             </button>
             <button onClick={downloadImage} className="w-full py-4 border border-white/20 text-white text-xs font-bold rounded-full hover:bg-white hover:text-black transition-all flex items-center justify-center gap-2">
-              <Download size={14} /> EXPORT PNG
+              <Download size={14} /> Export PNG
             </button>
           </div>
 
           {stock.length > 0 && (
             <section className="pt-10 space-y-4 border-t border-white/5">
-              <div className="flex items-center gap-2 text-white/40 font-bold uppercase text-[10px]">Archive</div>
+              <div className="flex items-center gap-2 text-white/40 font-bold text-[10px]">Archive</div>
               <div className="grid grid-cols-2 gap-3 pb-8">
                 {stock.map((item) => (
                   <div key={item.id} onClick={() => { setColors(item.colors); setAngle(item.angle); setTitle(item.title); setNoise(item.noise); }} className="aspect-[2/3] bg-[#111] border border-white/5 relative group cursor-pointer hover:border-white/20 transition-all overflow-hidden">
