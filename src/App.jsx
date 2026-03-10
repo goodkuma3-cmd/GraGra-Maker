@@ -1,27 +1,25 @@
-import React, { useState } from 'react';
-import { Plus, Trash2, Download, Save, Grid, PlusCircle, MoveHorizontal, Palette, Type, Sparkles, GripVertical } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Download, Plus, Trash2, Copy, ExternalLink } from 'lucide-react';
 
 const App = () => {
-  // 状態管理
+  // 1. ファイル名の初期値を空欄に変更
+  const [filename, setFilename] = useState('');
   const [colors, setColors] = useState([
-    { id: 1, hex: '#4158D0', stop: 0 },
-    { id: 2, hex: '#C850C0', stop: 46 },
-    { id: 3, hex: '#FFCC70', stop: 100 },
+    { id: 1, color: '#4facfe', position: 0 },
+    { id: 2, color: '#00f2fe', position: 100 }
   ]);
-  const [angle, setAngle] = useState(180);
-  const [title, setTitle] = useState('ORIKAZE_SORA');
-  const [subtitle, setSubtitle] = useState('KUMAnoTE');
-  const [number, setNumber] = useState('01');
-  const [noise, setNoise] = useState(0.15);
-  
-  const [stock, setStock] = useState([]);
-  const [draggedItemIndex, setDraggedItemIndex] = useState(null);
+  const [angle, setAngle] = useState(135);
 
-  // 色の追加・削除・更新
+  const gradientString = `linear-gradient(${angle}deg, ${colors
+    .sort((a, b) => a.position - b.position)
+    .map(c => `${c.color} ${c.position}%`)
+    .join(', ')})`;
+
   const addColor = () => {
-    const newId = Date.now();
-    const lastColor = colors[colors.length - 1];
-    setColors([...colors, { id: newId, hex: '#ffffff', stop: Math.min(100, lastColor.stop + 10) }]);
+    if (colors.length < 5) {
+      const newId = Math.max(...colors.map(c => c.id)) + 1;
+      setColors([...colors, { id: newId, color: '#ffffff', position: 50 }]);
+    }
   };
 
   const removeColor = (id) => {
@@ -34,236 +32,127 @@ const App = () => {
     setColors(colors.map(c => c.id === id ? { ...c, [field]: value } : c));
   };
 
-  // ドラッグ＆ドロップ用ハンドラ
-  const handleDragStart = (index) => {
-    setDraggedItemIndex(index);
-  };
-
-  const handleDragOver = (e, index) => {
-    e.preventDefault();
-    if (draggedItemIndex === null || draggedItemIndex === index) return;
-    const newColors = [...colors];
-    const draggedItem = newColors[draggedItemIndex];
-    newColors.splice(draggedItemIndex, 1);
-    newColors.splice(index, 0, draggedItem);
-    setDraggedItemIndex(index);
-    setColors(newColors);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedItemIndex(null);
-  };
-
-  const getGradientString = (cols) => {
-    const colorStops = cols.map(c => `${c.hex} ${c.stop}%`).join(', ');
-    return `linear-gradient(${angle}deg, ${colorStops})`;
-  };
-
-  const addToStock = () => {
-    const newItem = { id: Date.now(), colors: [...colors], angle, title, subtitle, number, noise };
-    setStock([newItem, ...stock]);
-  };
-
-  // 画像として書き出し（全面グラデーション・文字なし）
-  const downloadImage = () => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = 1200;
-    canvas.height = 1800;
-
-    // 1. 全面グラデーションの描画
-    const lingrad = ctx.createLinearGradient(
-      canvas.width/2 + Math.cos((angle-90) * Math.PI/180) * canvas.height/2,
-      canvas.height/2 + Math.sin((angle-90) * Math.PI/180) * canvas.height/2,
-      canvas.width/2 + Math.cos((angle+90) * Math.PI/180) * canvas.height/2,
-      canvas.height/2 + Math.sin((angle+90) * Math.PI/180) * canvas.height/2
-    );
-    
-    colors.forEach(c => {
-      lingrad.addColorStop(c.stop / 100, c.hex);
-    });
-    
-    ctx.fillStyle = lingrad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // 2. ノイズの描画
-    if (noise > 0) {
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        const diff = (Math.random() - 0.5) * 255 * noise * 1.2; 
-        data[i] = Math.min(255, Math.max(0, data[i] + diff));
-        data[i+1] = Math.min(255, Math.max(0, data[i+1] + diff));
-        data[i+2] = Math.min(255, Math.max(0, data[i+2] + diff));
-      }
-      ctx.putImageData(imageData, 0, 0);
-    }
-
-    // 書き出し（ファイル名に title を使用）
-    const link = document.createElement('a');
-    const fileName = title.replace(/[^a-z0-9]/gi, '_').toUpperCase(); // 安全なファイル名に変換
-    link.download = `${fileName}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  };
-
   return (
-    <div className="flex h-screen bg-[#050505] text-[#e0e0e0] font-sans overflow-hidden">
-      
-      {/* 左側：コントロールパネル */}
-      <aside className="w-[380px] h-full border-r border-white/10 flex flex-col bg-[#0a0a0a] z-10 overflow-y-auto custom-scrollbar">
-        <div className="p-8 space-y-10">
-          
+    <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8 font-sans">
+      <div className="max-w-4xl mx-auto">
+        
+        {/* ヘッダーセクション: 公式感のあるデザインに変更 */}
+        <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between border-b border-slate-700 pb-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-white">
+              <span className="text-blue-400">KUMAnoTE</span> | GraGra-Maker
+            </h1>
+            <p className="text-slate-400 mt-2 text-sm italic">アノテ コノテ クマノテ — 表現のためのグラデーション生成ツール</p>
+          </div>
+          <div className="mt-4 md:mt-0">
+            <a 
+              href="https://kuma-no-te.jp/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-slate-500 hover:text-blue-400 transition-colors"
+            >
+              Official Website <ExternalLink size={12} />
+            </a>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* 左側：プレビューと出力 */}
           <div className="space-y-6">
-            <div className="flex items-center gap-2 text-white/40 mb-2">
-              <Type size={14} />
-              <span className="text-[10px] tracking-[0.2em] font-bold uppercase">Project Meta</span>
-            </div>
-            <div className="space-y-4">
-              <div className="group">
-                <label className="text-[9px] text-white/30 uppercase tracking-tighter block mb-1">Title (Filename)</label>
-                <input 
-                  type="text" value={title} onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-transparent border-b border-white/10 py-1 text-sm focus:border-white outline-none transition-colors"
-                  placeholder="FILENAME HERE"
-                />
-              </div>
-            </div>
-          </div>
-
-          <section className="space-y-6">
-            <div className="flex items-center justify-between text-white/40 mb-2">
-              <div className="flex items-center gap-2">
-                <MoveHorizontal size={14} />
-                <span className="text-[10px] tracking-[0.2em] font-bold uppercase">Angle</span>
-              </div>
-              <span className="text-xs text-white/80">{angle}°</span>
-            </div>
-            <input 
-              type="range" min="0" max="360" value={angle} 
-              onChange={(e) => setAngle(parseInt(e.target.value))}
-              className="w-full h-[1px] bg-white/20 appearance-none cursor-pointer accent-white"
+            <div 
+              className="w-full aspect-video rounded-xl shadow-2xl border border-slate-700"
+              style={{ background: gradientString }}
             />
-          </section>
-
-          <section className="space-y-6">
-            <div className="flex items-center justify-between text-white/40 mb-2">
-              <div className="flex items-center gap-2">
-                <Sparkles size={14} />
-                <span className="text-[10px] tracking-[0.2em] font-bold uppercase">Noise</span>
-              </div>
-              <span className="text-xs text-white/80">{(noise * 100).toFixed(0)}%</span>
-            </div>
-            <input 
-              type="range" min="0" max="0.5" step="0.01" value={noise} 
-              onChange={(e) => setNoise(parseFloat(e.target.value))}
-              className="w-full h-[1px] bg-white/20 appearance-none cursor-pointer accent-white"
-            />
-          </section>
-
-          <section className="space-y-6">
-            <div className="flex items-center justify-between text-white/40 mb-2">
-              <div className="flex items-center gap-2">
-                <Palette size={14} />
-                <span className="text-[10px] tracking-[0.2em] font-bold uppercase">Colors</span>
-              </div>
-              <button onClick={addColor} className="hover:text-white transition-colors">
-                <Plus size={16} />
-              </button>
-            </div>
             
-            <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
-              {colors.map((color, index) => (
-                <div 
-                  key={color.id} 
-                  onDragOver={(e) => handleDragOver(e, index)}
-                  className={`group relative flex flex-col gap-2 p-3 bg-white/[0.03] border rounded-sm transition-all ${
-                    draggedItemIndex === index ? 'opacity-40 border-white/40 bg-white/[0.1]' : 'border-white/5 hover:bg-white/[0.05]'
-                  }`}
+            <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">CSS Output</label>
+              <div className="flex gap-2">
+                <code className="flex-1 bg-slate-950 p-3 rounded text-sm text-blue-300 break-all border border-slate-900">
+                  {gradientString}
+                </code>
+                <button 
+                  onClick={() => navigator.clipboard.writeText(gradientString)}
+                  className="p-3 bg-slate-700 hover:bg-slate-600 rounded transition-colors"
+                  title="Copy to clipboard"
                 >
-                  <div className="flex items-center gap-3">
-                    <div 
-                      draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}
-                      className="text-white/20 hover:text-white/60 cursor-grab active:cursor-grabbing p-1 -ml-1"
-                    >
-                      <GripVertical size={14} />
-                    </div>
-                    <input 
-                      type="color" value={color.hex} 
-                      onChange={(e) => updateColor(color.id, 'hex', e.target.value)}
-                      className="w-6 h-6 rounded-full border-0 cursor-pointer p-0 bg-transparent"
-                    />
-                    <input 
-                      type="text" value={color.hex.toUpperCase()} 
-                      onChange={(e) => updateColor(color.id, 'hex', e.target.value)}
-                      className="bg-transparent text-[10px] font-mono outline-none w-20"
-                    />
-                    <div className="flex-1 flex justify-end">
-                      <button onClick={() => removeColor(color.id)} className="text-white/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="relative pt-1">
-                    <input 
-                      type="range" min="0" max="100" value={color.stop} 
-                      onChange={(e) => updateColor(color.id, 'stop', parseInt(e.target.value))}
-                      className="w-full h-[1px] bg-white/10 appearance-none cursor-pointer accent-white/50"
-                    />
-                  </div>
-                </div>
-              ))}
+                  <Copy size={18} />
+                </button>
+              </div>
             </div>
-          </section>
-
-          <div className="pt-4 space-y-3">
-            <button onClick={addToStock} className="w-full py-4 bg-white text-black text-xs font-bold rounded-full hover:bg-[#ccc] transition-all flex items-center justify-center gap-2">
-              <Save size={14} /> SAVE TO STOCK
-            </button>
-            <button onClick={downloadImage} className="w-full py-4 border border-white/20 text-white text-xs font-bold rounded-full hover:bg-white hover:text-black transition-all flex items-center justify-center gap-2">
-              <Download size={14} /> EXPORT PNG
-            </button>
           </div>
 
-          {stock.length > 0 && (
-            <section className="pt-10 space-y-4 border-t border-white/5">
-              <div className="flex items-center gap-2 text-white/40 font-bold uppercase text-[10px]">Archive</div>
-              <div className="grid grid-cols-2 gap-3 pb-8">
-                {stock.map((item) => (
-                  <div key={item.id} onClick={() => { setColors(item.colors); setAngle(item.angle); setTitle(item.title); setNoise(item.noise); }} className="aspect-[2/3] bg-[#111] border border-white/5 relative group cursor-pointer hover:border-white/20 transition-all overflow-hidden">
-                    <div className="w-full h-full" style={{ background: getGradientString(item.colors) }}></div>
+          {/* 右側：コントロールパネル */}
+          <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl space-y-6">
+            <div>
+              <label className="block text-sm font-medium mb-3">Project Title (Filename)</label>
+              <input 
+                type="text" 
+                value={filename}
+                onChange={(e) => setFilename(e.target.value)}
+                placeholder="名称未設定"
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <label className="text-sm font-medium">Colors (Max 5)</label>
+                <button 
+                  onClick={addColor}
+                  disabled={colors.length >= 5}
+                  className="flex items-center gap-1 text-xs bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 px-3 py-1.5 rounded-full transition-all"
+                >
+                  <Plus size={14} /> Add Color
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                {colors.map((c) => (
+                  <div key={c.id} className="flex items-center gap-3 bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
+                    <input 
+                      type="color" 
+                      value={c.color}
+                      onChange={(e) => updateColor(c.id, 'color', e.target.value)}
+                      className="w-10 h-10 rounded cursor-pointer bg-transparent"
+                    />
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="100" 
+                      value={c.position}
+                      onChange={(e) => updateColor(c.id, 'position', parseInt(e.target.value))}
+                      className="flex-1"
+                    />
+                    <span className="text-xs font-mono w-8 text-right">{c.position}%</span>
+                    <button 
+                      onClick={() => removeColor(c.id)}
+                      className="text-slate-500 hover:text-red-400 p-1"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 ))}
               </div>
-            </section>
-          )}
-        </div>
-      </aside>
+            </div>
 
-      {/* 右側：メインプレビュー（全面グラデーション） */}
-      <main className="flex-1 relative flex items-center justify-center p-12 overflow-hidden bg-[#050505]">
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(white 1px, transparent 0)`, backgroundSize: `24px 24px` }}></div>
+            <div>
+              <label className="block text-sm font-medium mb-3">Angle: {angle}°</label>
+              <input 
+                type="range" 
+                min="0" 
+                max="360" 
+                value={angle}
+                onChange={(e) => setAngle(parseInt(e.target.value))}
+                className="w-full"
+              />
+            </div>
 
-        <div className="relative bg-white shadow-[0_0_100px_rgba(255,255,255,0.05)] w-full max-w-[500px] aspect-[2/3] flex flex-col group animate-in fade-in zoom-in duration-700 overflow-hidden">
-          <div className="flex-1 w-full h-full relative overflow-hidden">
-            <div className="absolute inset-0" style={{ background: getGradientString(colors) }}></div>
-            <div 
-              className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-30"
-              style={{ 
-                opacity: noise,
-                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='3.5' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
-              }}
-            ></div>
+            <button className="w-full bg-white text-slate-900 font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition-all shadow-lg active:scale-[0.98]">
+              <Download size={20} /> Export Configuration
+            </button>
           </div>
         </div>
-      </main>
-
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
-        input[type="range"]::-webkit-slider-thumb { width: 12px; height: 12px; border-radius: 50%; background: white; cursor: pointer; -webkit-appearance: none; }
-      `}</style>
+      </div>
     </div>
   );
 };
