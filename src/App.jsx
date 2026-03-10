@@ -105,11 +105,11 @@ const App = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[#050505] text-[#e0e0e0] font-sans overflow-hidden select-none" style={{ fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif' }}>
+    <div className="flex flex-col lg:flex-row h-screen bg-[#050505] text-[#e0e0e0] font-sans overflow-hidden select-none" style={{ fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif' }}>
       
-      {/* 左側：コントロールパネル */}
-      <aside className="w-[380px] h-full border-r border-white/10 flex flex-col bg-[#0a0a0a] z-10 overflow-y-auto custom-scrollbar">
-        <div className="p-8 space-y-10">
+      {/* 左側（スマホでは上側）：コントロールパネル */}
+      <aside className="w-full lg:w-[380px] h-[60vh] lg:h-full border-b lg:border-b-0 lg:border-r border-white/10 flex flex-col bg-[#0a0a0a] z-10 overflow-y-auto custom-scrollbar">
+        <div className="p-6 lg:p-8 space-y-8 lg:space-y-10">
           
           <div className="space-y-6">
             <div className="mb-2">
@@ -135,7 +135,7 @@ const App = () => {
             </div>
           </div>
 
-          <section className="space-y-6">
+          <section className="space-y-4 lg:space-y-6">
             <div className="flex items-center justify-between text-white/40 mb-2">
               <div className="flex items-center gap-2">
                 <MoveHorizontal size={14} />
@@ -150,7 +150,7 @@ const App = () => {
             />
           </section>
 
-          <section className="space-y-6">
+          <section className="space-y-4 lg:space-y-6">
             <div className="flex items-center justify-between text-white/40 mb-2">
               <div className="flex items-center gap-2">
                 <Sparkles size={14} />
@@ -165,7 +165,7 @@ const App = () => {
             />
           </section>
 
-          <section className="space-y-6">
+          <section className="space-y-4 lg:space-y-6">
             <div className="flex items-center justify-between text-white/40 mb-2">
               <div className="flex items-center gap-2">
                 <Palette size={14} />
@@ -176,7 +176,7 @@ const App = () => {
               </button>
             </div>
             
-            <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-3 lg:space-y-4 max-h-[250px] lg:max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
               {colors.map((color, index) => (
                 <div 
                   key={color.id} 
@@ -220,7 +220,7 @@ const App = () => {
             </div>
           </section>
 
-          <div className="pt-4 space-y-3">
+          <div className="pt-4 space-y-3 pb-8 lg:pb-0">
             <button onClick={addToStock} className="w-full py-4 bg-white text-black text-xs font-bold rounded-full hover:bg-[#ccc] transition-all flex items-center justify-center gap-2">
               <Save size={14} /> Save to Stock
             </button>
@@ -232,7 +232,7 @@ const App = () => {
           {stock.length > 0 && (
             <section className="pt-10 space-y-4 border-t border-white/5">
               <div className="flex items-center gap-2 text-white/40 font-bold text-[10px]">Archive</div>
-              <div className="grid grid-cols-2 gap-3 pb-8">
+              <div className="grid grid-cols-2 gap-3 pb-12">
                 {stock.map((item) => (
                   <div key={item.id} onClick={() => { setColors(item.colors); setAngle(item.angle); setTitle(item.title); setNoise(item.noise); }} className="aspect-[2/3] bg-[#111] border border-white/5 relative group cursor-pointer hover:border-white/20 transition-all overflow-hidden">
                     <div className="w-full h-full" style={{ background: getGradientString(item.colors) }}></div>
@@ -244,11 +244,11 @@ const App = () => {
         </div>
       </aside>
 
-      {/* 右側：メインプレビュー */}
-      <main className="flex-1 relative flex items-center justify-center p-12 overflow-hidden bg-[#050505]">
+      {/* 右側（スマホでは下側）：メインプレビュー */}
+      <main className="flex-1 relative flex items-center justify-center p-6 lg:p-12 overflow-hidden bg-[#050505]">
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(white 1px, transparent 0)`, backgroundSize: `24px 24px` }}></div>
 
-        <div className="relative bg-white shadow-[0_0_100px_rgba(255,255,255,0.05)] w-full max-w-[500px] aspect-[2/3] flex flex-col group animate-in fade-in zoom-in duration-700 overflow-hidden">
+        <div className="relative bg-white shadow-[0_0_100px_rgba(255,255,255,0.05)] w-full max-w-[300px] lg:max-w-[500px] aspect-[2/3] flex flex-col group animate-in fade-in zoom-in duration-700 overflow-hidden">
           <div className="flex-1 w-full h-full relative overflow-hidden">
             <div className="absolute inset-0" style={{ background: getGradientString(colors) }}></div>
             <div 
