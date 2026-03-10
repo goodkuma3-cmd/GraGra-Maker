@@ -9,7 +9,7 @@ const App = () => {
     { id: 3, hex: '#FFCC70', stop: 100 },
   ]);
   const [angle, setAngle] = useState(180);
-  const [title, setTitle] = useState('ORIKAZE_SORA');
+  const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('KUMAnoTE');
   const [number, setNumber] = useState('01');
   const [noise, setNoise] = useState(0.15);
@@ -117,7 +117,7 @@ const App = () => {
           <div className="space-y-6">
             <div className="flex items-center gap-2 text-white/40 mb-2">
               <Type size={14} />
-              <span className="text-[10px] tracking-[0.2em] font-bold uppercase">Project Meta</span>
+              <span className="text-[10px] tracking-[0.2em] font-bold uppercase">KUMAnoTE GraGra-Maker</span>
             </div>
             <div className="space-y-4">
               <div className="group">
