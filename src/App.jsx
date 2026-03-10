@@ -66,11 +66,14 @@ const App = () => {
     setStock([newItem, ...stock]);
   };
 
+  // 画像として書き出し（スマホ最適化 1080x1920）
   const downloadImage = () => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    canvas.width = 1200;
-    canvas.height = 1800;
+    // 9:16 のアスペクト比で書き出し
+    canvas.width = 1080;
+    canvas.height = 1920;
+
     const lingrad = ctx.createLinearGradient(
       canvas.width/2 + Math.cos((angle-90) * Math.PI/180) * canvas.height/2,
       canvas.height/2 + Math.sin((angle-90) * Math.PI/180) * canvas.height/2,
@@ -80,6 +83,7 @@ const App = () => {
     colors.forEach(c => lingrad.addColorStop(c.stop / 100, c.hex));
     ctx.fillStyle = lingrad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
     if (noise > 0) {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
@@ -92,20 +96,19 @@ const App = () => {
       ctx.putImageData(imageData, 0, 0);
     }
     const link = document.createElement('a');
-    const fileName = title ? title.replace(/[^a-z0-9]/gi, '_') : 'GraGra_Output';
+    const fileName = title ? title.replace(/[^a-z0-9]/gi, '_') : 'GraGra_9_16';
     link.download = `${fileName}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   };
 
-  // ボタンコンポーネント（再利用用）
   const ActionButtons = () => (
     <div className="flex flex-col gap-3 w-full">
       <button onClick={addToStock} className="w-full py-4 bg-white text-black text-xs font-bold rounded-full hover:bg-[#ccc] transition-all flex items-center justify-center gap-2 active:scale-95">
         <Save size={14} /> Save to Stock
       </button>
       <button onClick={downloadImage} className="w-full py-4 border border-white/20 text-white text-xs font-bold rounded-full hover:bg-white hover:text-black transition-all flex items-center justify-center gap-2 active:scale-95">
-        <Download size={14} /> Export PNG
+        <Download size={14} /> Export PNG (9:16)
       </button>
     </div>
   );
@@ -155,9 +158,7 @@ const App = () => {
               {colors.map((color, index) => (
                 <div key={color.id} onDragOver={(e) => handleDragOver(e, index)} className={`group relative flex flex-col gap-2 p-3 bg-white/[0.03] border rounded-sm transition-all ${draggedItemIndex === index ? 'opacity-40 border-white/40 bg-white/[0.1]' : 'border-white/5 hover:bg-white/[0.05]'}`}>
                   <div className="flex items-center gap-2">
-                    {/* PC用ドラッグハンドル */}
                     <div draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd} className="hidden lg:block text-white/20 hover:text-white/60 cursor-grab active:cursor-grabbing p-1"><GripVertical size={14} /></div>
-                    {/* スマホ用並び替えボタン */}
                     <div className="flex lg:hidden flex-col gap-1 pr-1 border-r border-white/5 mr-1">
                       <button onClick={() => moveColor(index, -1)} className="text-white/30 hover:text-white"><ChevronUp size={16} /></button>
                       <button onClick={() => moveColor(index, 1)} className="text-white/30 hover:text-white"><ChevronDown size={16} /></button>
@@ -174,19 +175,18 @@ const App = () => {
             </div>
           </section>
 
-          {/* PC時のみ表示されるボタン */}
           <div className="hidden lg:block pt-4">
             <ActionButtons />
           </div>
         </div>
       </aside>
 
-      {/* グラデーション表示 & スマホ時ボタン */}
+      {/* グラデーション表示エリア */}
       <main className="flex-1 relative flex flex-col items-center justify-start lg:justify-center p-6 lg:p-12 overflow-y-auto lg:overflow-hidden bg-[#050505] custom-scrollbar">
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(white 1px, transparent 0)`, backgroundSize: `24px 24px` }}></div>
 
-        {/* プレビュー本体 */}
-        <div className="relative bg-white shadow-[0_0_100px_rgba(255,255,255,0.05)] w-full max-w-[280px] lg:max-w-[500px] aspect-[2/3] flex flex-col animate-in fade-in zoom-in duration-700 overflow-hidden mb-8 lg:mb-0">
+        {/* プレビュー本体: スマホ時は 9:16、PC時は 2:3 */}
+        <div className="relative bg-white shadow-[0_0_100px_rgba(255,255,255,0.05)] w-full max-w-[260px] lg:max-w-[500px] aspect-[9/16] lg:aspect-[2/3] flex flex-col animate-in fade-in zoom-in duration-700 overflow-hidden mb-8 lg:mb-0">
           <div className="flex-1 w-full h-full relative overflow-hidden">
             <div className="absolute inset-0" style={{ background: getGradientString(colors) }}></div>
             <div className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-30" style={{ opacity: noise, backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='3.5' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}></div>
@@ -194,17 +194,17 @@ const App = () => {
         </div>
 
         {/* スマホ時のみ表示されるボタン */}
-        <div className="flex lg:hidden w-full max-w-[280px] pb-10">
+        <div className="flex lg:hidden w-full max-w-[260px] pb-10">
           <ActionButtons />
         </div>
 
-        {/* アーカイブ (Stock) */}
+        {/* アーカイブ */}
         {stock.length > 0 && (
-          <section className="w-full max-w-[280px] lg:hidden space-y-4 border-t border-white/5 pt-8 pb-12">
+          <section className="w-full max-w-[260px] lg:hidden space-y-4 border-t border-white/5 pt-8 pb-12">
             <div className="text-white/40 font-bold text-[10px]">Archive</div>
             <div className="grid grid-cols-2 gap-3">
               {stock.map((item) => (
-                <div key={item.id} onClick={() => { setColors(item.colors); setAngle(item.angle); setTitle(item.title); setNoise(item.noise); window.scrollTo({top: 0, behavior: 'smooth'}); }} className="aspect-[2/3] bg-[#111] border border-white/5 relative group cursor-pointer hover:border-white/20 transition-all overflow-hidden">
+                <div key={item.id} onClick={() => { setColors(item.colors); setAngle(item.angle); setTitle(item.title); setNoise(item.noise); window.scrollTo({top: 0, behavior: 'smooth'}); }} className="aspect-[9/16] bg-[#111] border border-white/5 relative group cursor-pointer hover:border-white/20 transition-all overflow-hidden">
                   <div className="w-full h-full" style={{ background: getGradientString(item.colors) }}></div>
                 </div>
               ))}
@@ -230,7 +230,6 @@ const App = () => {
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
         
-        /* つまみ（丸）のサイズ調整 */
         input[type="range"]::-webkit-slider-thumb { 
           width: 14px; height: 14px; 
           border-radius: 50%; background: white; 
@@ -238,13 +237,12 @@ const App = () => {
           border: 2px solid #000;
         }
 
-        /* スマホ時のみつまみを大きく */
         @media (max-width: 1024px) {
           input[type="range"]::-webkit-slider-thumb { 
             width: 28px; height: 28px; 
           }
           input[type="range"] {
-            height: 30px; /* タップ領域を確保 */
+            height: 30px;
           }
         }
       `}</style>
