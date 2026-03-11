@@ -66,31 +66,31 @@ const App = () => {
     setStock([newItem, ...stock]);
   };
 
-  // 画像として書き出し（PCとスマホでサイズを分岐）
+  // 画像として書き出し（上下反転を修正）
   const downloadImage = () => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-
-    // 画面の横幅でデバイスを判定
     const isMobile = window.innerWidth < 1024;
     
     if (isMobile) {
-      // スマホ時：9:16 (1080x1920)
       canvas.width = 1080;
       canvas.height = 1920;
     } else {
-      // PC時：800x1280
       canvas.width = 800;
       canvas.height = 1280;
     }
 
-    const lingrad = ctx.createLinearGradient(
-      canvas.width/2 + Math.cos((angle-90) * Math.PI/180) * canvas.height/2,
-      canvas.height/2 + Math.sin((angle-90) * Math.PI/180) * canvas.height/2,
-      canvas.width/2 + Math.cos((angle+90) * Math.PI/180) * canvas.height/2,
-      canvas.height/2 + Math.sin((angle+90) * Math.PI/180) * canvas.height/2
-    );
+    // --- 反転修正の計算式 ---
+    // CSSの角度（angle）をCanvasの座標系に正確に変換します
+    const rad = (angle - 90) * Math.PI / 180;
+    const x1 = canvas.width / 2 + Math.cos(rad + Math.PI) * (canvas.width / 2);
+    const y1 = canvas.height / 2 + Math.sin(rad + Math.PI) * (canvas.height / 2);
+    const x2 = canvas.width / 2 + Math.cos(rad) * (canvas.width / 2);
+    const y2 = canvas.height / 2 + Math.sin(rad) * (canvas.height / 2);
+
+    const lingrad = ctx.createLinearGradient(x1, y1, x2, y2);
     colors.forEach(c => lingrad.addColorStop(c.stop / 100, c.hex));
+    
     ctx.fillStyle = lingrad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -126,11 +126,8 @@ const App = () => {
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-[#050505] text-[#e0e0e0] font-sans overflow-hidden select-none" style={{ fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif' }}>
-      
-      {/* 設定エリア */}
       <aside className="w-full lg:w-[380px] h-[50vh] lg:h-full border-b lg:border-b-0 lg:border-r border-white/10 flex flex-col bg-[#0a0a0a] z-10 overflow-y-auto custom-scrollbar">
         <div className="p-6 lg:p-8 space-y-8 lg:space-y-10">
-          
           <div className="space-y-6">
             <div>
               <a href="https://kuma-no-te.jp/" target="_blank" rel="noopener noreferrer" className="inline-flex items-baseline text-white/40 hover:text-white/80 transition-colors group">
@@ -143,28 +140,16 @@ const App = () => {
               <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-transparent border-b border-white/10 py-1 text-sm focus:border-white outline-none transition-colors" placeholder="" />
             </div>
           </div>
-
           <section className="space-y-4">
-            <div className="flex items-center justify-between text-white/40">
-              <div className="flex items-center gap-2"><MoveHorizontal size={14} /><span className="text-[10px] tracking-[0.2em] font-bold">Angle</span></div>
-              <span className="text-xs text-white/80">{angle}°</span>
-            </div>
+            <div className="flex items-center justify-between text-white/40"><div className="flex items-center gap-2"><MoveHorizontal size={14} /><span className="text-[10px] tracking-[0.2em] font-bold">Angle</span></div><span className="text-xs text-white/80">{angle}°</span></div>
             <input type="range" min="0" max="360" value={angle} onChange={(e) => setAngle(parseInt(e.target.value))} className="w-full h-[1px] bg-white/20 appearance-none cursor-pointer accent-white" />
           </section>
-
           <section className="space-y-4">
-            <div className="flex items-center justify-between text-white/40">
-              <div className="flex items-center gap-2"><Sparkles size={14} /><span className="text-[10px] tracking-[0.2em] font-bold">Noise</span></div>
-              <span className="text-xs text-white/80">{(noise * 100).toFixed(0)}%</span>
-            </div>
+            <div className="flex items-center justify-between text-white/40"><div className="flex items-center gap-2"><Sparkles size={14} /><span className="text-[10px] tracking-[0.2em] font-bold">Noise</span></div><span className="text-xs text-white/80">{(noise * 100).toFixed(0)}%</span></div>
             <input type="range" min="0" max="0.5" step="0.01" value={noise} onChange={(e) => setNoise(parseFloat(e.target.value))} className="w-full h-[1px] bg-white/20 appearance-none cursor-pointer accent-white" />
           </section>
-
           <section className="space-y-4">
-            <div className="flex items-center justify-between text-white/40 mb-2">
-              <div className="flex items-center gap-2"><Palette size={14} /><span className="text-[10px] tracking-[0.2em] font-bold">Colors</span></div>
-              <button onClick={addColor} className="hover:text-white p-1"><Plus size={18} /></button>
-            </div>
+            <div className="flex items-center justify-between text-white/40 mb-2"><div className="flex items-center gap-2"><Palette size={14} /><span className="text-[10px] tracking-[0.2em] font-bold">Colors</span></div><button onClick={addColor} className="hover:text-white p-1"><Plus size={18} /></button></div>
             <div className="space-y-3 lg:space-y-4 overflow-y-visible">
               {colors.map((color, index) => (
                 <div key={color.id} onDragOver={(e) => handleDragOver(e, index)} className={`group relative flex flex-col gap-2 p-3 bg-white/[0.03] border rounded-sm transition-all ${draggedItemIndex === index ? 'opacity-40 border-white/40 bg-white/[0.1]' : 'border-white/5 hover:bg-white/[0.05]'}`}>
@@ -176,40 +161,25 @@ const App = () => {
                     </div>
                     <input type="color" value={color.hex} onChange={(e) => updateColor(color.id, 'hex', e.target.value)} className="w-7 h-7 rounded-full border-0 cursor-pointer p-0 bg-transparent" />
                     <input type="text" value={color.hex.toUpperCase()} onChange={(e) => updateColor(color.id, 'hex', e.target.value)} className="bg-transparent text-[10px] font-mono outline-none w-16" />
-                    <div className="flex-1 flex justify-end">
-                      <button onClick={() => removeColor(color.id)} className="text-white/20 hover:text-red-400 p-1"><Trash2 size={14} /></button>
-                    </div>
+                    <div className="flex-1 flex justify-end"><button onClick={() => removeColor(color.id)} className="text-white/20 hover:text-red-400 p-1"><Trash2 size={14} /></button></div>
                   </div>
                   <input type="range" min="0" max="100" value={color.stop} onChange={(e) => updateColor(color.id, 'stop', parseInt(e.target.value))} className="w-full h-[1px] bg-white/10 appearance-none cursor-pointer accent-white/50" />
                 </div>
               ))}
             </div>
           </section>
-
-          <div className="hidden lg:block pt-4">
-            <ActionButtons />
-          </div>
+          <div className="hidden lg:block pt-4"><ActionButtons /></div>
         </div>
       </aside>
-
-      {/* メイン表示エリア */}
       <main className="flex-1 relative flex flex-col items-center justify-start lg:justify-center p-6 lg:p-12 overflow-y-auto lg:overflow-hidden bg-[#050505] custom-scrollbar">
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(white 1px, transparent 0)`, backgroundSize: `24px 24px` }}></div>
-
-        {/* プレビュー本体: スマホ時は 9:16、PC時は 2:3 */}
         <div className="relative bg-white shadow-[0_0_100px_rgba(255,255,255,0.05)] w-full max-w-[260px] lg:max-w-[500px] aspect-[9/16] lg:aspect-[2/3] flex flex-col animate-in fade-in zoom-in duration-700 overflow-hidden mb-8 lg:mb-0">
           <div className="flex-1 w-full h-full relative overflow-hidden">
             <div className="absolute inset-0" style={{ background: getGradientString(colors) }}></div>
             <div className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-30" style={{ opacity: noise, backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='3.5' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}></div>
           </div>
         </div>
-
-        {/* スマホ時のみ表示されるボタン */}
-        <div className="flex lg:hidden w-full max-w-[260px] pb-10">
-          <ActionButtons />
-        </div>
-
-        {/* アーカイブ */}
+        <div className="flex lg:hidden w-full max-w-[260px] pb-10"><ActionButtons /></div>
         {stock.length > 0 && (
           <section className="w-full max-w-[260px] lg:hidden space-y-4 border-t border-white/5 pt-8 pb-12">
             <div className="text-white/40 font-bold text-[10px]">Archive</div>
@@ -223,8 +193,6 @@ const App = () => {
           </section>
         )}
       </main>
-
-      {/* ストックエリア（PC用） */}
       {stock.length > 0 && (
         <aside className="hidden lg:flex w-[120px] h-full border-l border-white/10 flex-col bg-[#0a0a0a] overflow-y-auto p-4 gap-4 custom-scrollbar">
           <div className="text-white/20 font-bold text-[8px] uppercase tracking-widest text-center mb-2">Archive</div>
@@ -235,26 +203,14 @@ const App = () => {
           ))}
         </aside>
       )}
-
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
-        
-        input[type="range"]::-webkit-slider-thumb { 
-          width: 14px; height: 14px; 
-          border-radius: 50%; background: white; 
-          cursor: pointer; -webkit-appearance: none; 
-          border: 2px solid #000;
-        }
-
+        input[type="range"]::-webkit-slider-thumb { width: 14px; height: 14px; border-radius: 50%; background: white; cursor: pointer; -webkit-appearance: none; border: 2px solid #000; }
         @media (max-width: 1024px) {
-          input[type="range"]::-webkit-slider-thumb { 
-            width: 28px; height: 28px; 
-          }
-          input[type="range"] {
-            height: 30px;
-          }
+          input[type="range"]::-webkit-slider-thumb { width: 28px; height: 28px; }
+          input[type="range"] { height: 30px; }
         }
       `}</style>
     </div>
