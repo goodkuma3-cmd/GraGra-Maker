@@ -2,25 +2,37 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <link rel="icon" type="image/png" href="/app-logo.png" />
-    <link rel="apple-touch-icon" href="/app-logo.png" />
+
+    <!-- PWA -->
     <link rel="manifest" href="/manifest.json" />
-    
+    <meta name="theme-color" content="#050505" />
+
+    <!-- favicon -->
+    <link rel="icon" href="/icon-192.png" />
+
+    <!-- iOS -->
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
     <title>GraGra-Maker</title>
 
     <meta name="description" content="表現のためのグラデーション生成ツール | GraGra-Maker" />
+
     <meta property="og:title" content="GraGra-Maker" />
     <meta property="og:description" content="直感的な操作で美しいグラデーションを作成・保存できる、KUMAnoTE公式ツール。" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://gragra.kuma-no-te.jp/" />
     <meta property="og:image" content="https://gragra.kuma-no-te.jp/og-image.png" />
     <meta property="og:site_name" content="GraGra-Maker" />
+
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://gragra.kuma-no-te.jp/og-image.png" />
+
   </head>
-  <body style="background-color: #050505;">
+
+  <body style="background-color:#050505;">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
