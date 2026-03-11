@@ -66,23 +66,13 @@ const App = () => {
     setStock([newItem, ...stock]);
   };
 
-  // 画像として書き出し（PCとスマホでサイズを分岐）
+  // 画像として書き出し（スマホ最適化 1080x1920）
   const downloadImage = () => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-
-    // 画面の横幅でデバイスを判定
-    const isMobile = window.innerWidth < 1024;
-    
-    if (isMobile) {
-      // スマホ時：9:16 (1080x1920)
-      canvas.width = 1080;
-      canvas.height = 1920;
-    } else {
-      // PC時：800x1280
-      canvas.width = 800;
-      canvas.height = 1280;
-    }
+    // 9:16 のアスペクト比で書き出し
+    canvas.width = 1080;
+    canvas.height = 1920;
 
     const lingrad = ctx.createLinearGradient(
       canvas.width/2 + Math.cos((angle-90) * Math.PI/180) * canvas.height/2,
@@ -105,9 +95,8 @@ const App = () => {
       }
       ctx.putImageData(imageData, 0, 0);
     }
-
     const link = document.createElement('a');
-    const fileName = title ? title.replace(/[^a-z0-9]/gi, '_') : 'GraGra_Output';
+    const fileName = title ? title.replace(/[^a-z0-9]/gi, '_') : 'GraGra_9_16';
     link.download = `${fileName}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
@@ -119,7 +108,7 @@ const App = () => {
         <Save size={14} /> Save to Stock
       </button>
       <button onClick={downloadImage} className="w-full py-4 border border-white/20 text-white text-xs font-bold rounded-full hover:bg-white hover:text-black transition-all flex items-center justify-center gap-2 active:scale-95">
-        <Download size={14} /> EXPORT PNG
+        <Download size={14} /> Export PNG (9:16)
       </button>
     </div>
   );
@@ -192,7 +181,7 @@ const App = () => {
         </div>
       </aside>
 
-      {/* メイン表示エリア */}
+      {/* グラデーション表示エリア */}
       <main className="flex-1 relative flex flex-col items-center justify-start lg:justify-center p-6 lg:p-12 overflow-y-auto lg:overflow-hidden bg-[#050505] custom-scrollbar">
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(white 1px, transparent 0)`, backgroundSize: `24px 24px` }}></div>
 
