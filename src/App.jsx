@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Download, Save, MoveHorizontal, Palette, Sparkles, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, Download, Save, MoveHorizontal, MoveVertical, Palette, Sparkles, GripVertical, ChevronUp, ChevronDown, CircleDot, Maximize } from 'lucide-react';
 
 const App = () => {
   // 状態管理
@@ -9,6 +9,9 @@ const App = () => {
     { id: 3, hex: '#FFCC70', stop: 100 },
   ]);
   const [angle, setAngle] = useState(180);
+  const [type, setType] = useState('linear'); // linear or radial
+  const [centerX, setCenterX] = useState(50);
+  const [centerY, setCenterY] = useState(50);
   const [title, setTitle] = useState('');
   const [noise, setNoise] = useState(0.15);
   const [stock, setStock] = useState([]);
@@ -42,7 +45,7 @@ const App = () => {
     setColors(newColors);
   };
 
-  // PC用：ドラッグ＆ドロップ用ハンドラ
+  // PC用：ドラッグ＆ドロップ
   const handleDragStart = (index) => setDraggedItemIndex(index);
   const handleDragOver = (e, index) => {
     e.preventDefault();
@@ -58,15 +61,18 @@ const App = () => {
 
   const getGradientString = (cols) => {
     const colorStops = cols.map(c => `${c.hex} ${c.stop}%`).join(', ');
+    if (type === 'radial') {
+      return `radial-gradient(circle at ${centerX}% ${centerY}%, ${colorStops})`;
+    }
     return `linear-gradient(${angle}deg, ${colorStops})`;
   };
 
   const addToStock = () => {
-    const newItem = { id: Date.now(), colors: [...colors], angle, title, noise };
+    const newItem = { id: Date.now(), colors: [...colors], angle, type, centerX, centerY, title, noise };
     setStock([newItem, ...stock]);
   };
 
-  // 画像として書き出し（上下反転修正済み）
+  // 画像として書き出し（Radial対応 & 反転修正済み）
   const downloadImage = () => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -80,15 +86,23 @@ const App = () => {
       canvas.height = 1280;
     }
 
-    const rad = (angle - 90) * Math.PI / 180;
-    const x1 = canvas.width / 2 + Math.cos(rad + Math.PI) * (canvas.width / 2);
-    const y1 = canvas.height / 2 + Math.sin(rad + Math.PI) * (canvas.height / 2);
-    const x2 = canvas.width / 2 + Math.cos(rad) * (canvas.width / 2);
-    const y2 = canvas.height / 2 + Math.sin(rad) * (canvas.height / 2);
+    let lingrad;
+    if (type === 'radial') {
+      const cx = (centerX / 100) * canvas.width;
+      const cy = (centerY / 100) * canvas.height;
+      // 画面の隅まで届くように最大半径を計算
+      const radius = Math.sqrt(Math.pow(canvas.width, 2) + Math.pow(canvas.height, 2));
+      lingrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+    } else {
+      const rad = (angle - 90) * Math.PI / 180;
+      const x1 = canvas.width / 2 + Math.cos(rad + Math.PI) * (canvas.width / 2);
+      const y1 = canvas.height / 2 + Math.sin(rad + Math.PI) * (canvas.height / 2);
+      const x2 = canvas.width / 2 + Math.cos(rad) * (canvas.width / 2);
+      const y2 = canvas.height / 2 + Math.sin(rad) * (canvas.height / 2);
+      lingrad = ctx.createLinearGradient(x1, y1, x2, y2);
+    }
 
-    const lingrad = ctx.createLinearGradient(x1, y1, x2, y2);
     colors.forEach(c => lingrad.addColorStop(c.stop / 100, c.hex));
-    
     ctx.fillStyle = lingrad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -111,7 +125,6 @@ const App = () => {
     link.click();
   };
 
-  // ボタンコンポーネント（スマホ時は保存ボタンを隠す設定を追加）
   const ActionButtons = ({ isMobileView = false }) => (
     <div className="flex flex-col gap-3 w-full">
       {!isMobileView && (
@@ -128,7 +141,6 @@ const App = () => {
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-[#050505] text-[#e0e0e0] font-sans overflow-hidden select-none" style={{ fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif' }}>
       
-      {/* 設定パネル */}
       <aside className="w-full lg:w-[380px] h-[50vh] lg:h-full border-b lg:border-b-0 lg:border-r border-white/10 flex flex-col bg-[#0a0a0a] z-10 overflow-y-auto custom-scrollbar">
         <div className="p-6 lg:p-8 space-y-8 lg:space-y-10">
           
@@ -146,8 +158,34 @@ const App = () => {
           </div>
 
           <section className="space-y-4">
-            <div className="flex items-center justify-between text-white/40"><div className="flex items-center gap-2"><MoveHorizontal size={14} /><span className="text-[10px] tracking-[0.2em] font-bold">Angle</span></div><span className="text-xs text-white/80">{angle}°</span></div>
-            <input type="range" min="0" max="360" value={angle} onChange={(e) => setAngle(parseInt(e.target.value))} className="w-full h-[1px] bg-white/20 appearance-none cursor-pointer accent-white" />
+            <div className="flex items-center gap-4 mb-2">
+              <button 
+                onClick={() => setType('linear')}
+                className={`flex-1 py-2 text-[10px] font-bold rounded-md border transition-all ${type === 'linear' ? 'bg-white text-black border-white' : 'text-white/40 border-white/10 hover:border-white/30'}`}
+              >LINEAR</button>
+              <button 
+                onClick={() => setType('radial')}
+                className={`flex-1 py-2 text-[10px] font-bold rounded-md border transition-all ${type === 'radial' ? 'bg-white text-black border-white' : 'text-white/40 border-white/10 hover:border-white/30'}`}
+              >RADIAL</button>
+            </div>
+
+            {type === 'linear' ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-white/40"><div className="flex items-center gap-2"><MoveHorizontal size={14} /><span className="text-[10px] tracking-[0.2em] font-bold">Angle</span></div><span className="text-xs text-white/80">{angle}°</span></div>
+                <input type="range" min="0" max="360" value={angle} onChange={(e) => setAngle(parseInt(e.target.value))} className="w-full h-[1px] bg-white/20 appearance-none cursor-pointer accent-white" />
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-white/40"><div className="flex items-center gap-2"><MoveHorizontal size={14} /><span className="text-[10px] tracking-[0.2em] font-bold">Axis X</span></div><span className="text-xs text-white/80">{centerX}%</span></div>
+                  <input type="range" min="0" max="100" value={centerX} onChange={(e) => setCenterX(parseInt(e.target.value))} className="w-full h-[1px] bg-white/20 appearance-none cursor-pointer accent-white" />
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-white/40"><div className="flex items-center gap-2"><MoveVertical size={14} /><span className="text-[10px] tracking-[0.2em] font-bold">Axis Y</span></div><span className="text-xs text-white/80">{centerY}%</span></div>
+                  <input type="range" min="0" max="100" value={centerY} onChange={(e) => setCenterY(parseInt(e.target.value))} className="w-full h-[1px] bg-white/20 appearance-none cursor-pointer accent-white" />
+                </div>
+              </div>
+            )}
           </section>
 
           <section className="space-y-4">
@@ -176,36 +214,25 @@ const App = () => {
             </div>
           </section>
 
-          {/* PC時：両方のボタンを表示 */}
-          <div className="hidden lg:block pt-4">
-            <ActionButtons isMobileView={false} />
-          </div>
+          <div className="hidden lg:block pt-4"><ActionButtons isMobileView={false} /></div>
         </div>
       </aside>
 
-      {/* メインプレビューエリア */}
       <main className="flex-1 relative flex flex-col items-center justify-start lg:justify-center p-6 lg:p-12 overflow-y-auto lg:overflow-hidden bg-[#050505] custom-scrollbar">
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(white 1px, transparent 0)`, backgroundSize: `24px 24px` }}></div>
-        
         <div className="relative bg-white shadow-[0_0_100px_rgba(255,255,255,0.05)] w-full max-w-[260px] lg:max-w-[500px] aspect-[9/16] lg:aspect-[2/3] flex flex-col animate-in fade-in zoom-in duration-700 overflow-hidden mb-8 lg:mb-0">
           <div className="flex-1 w-full h-full relative overflow-hidden">
             <div className="absolute inset-0" style={{ background: getGradientString(colors) }}></div>
             <div className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-30" style={{ opacity: noise, backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='3.5' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}></div>
           </div>
         </div>
-
-        {/* スマホ時：書き出しボタンのみ表示 */}
-        <div className="flex lg:hidden w-full max-w-[260px] pb-10">
-          <ActionButtons isMobileView={true} />
-        </div>
-
-        {/* アーカイブ（スマホ時も確認は可能にするが、保存ボタンはない） */}
+        <div className="flex lg:hidden w-full max-w-[260px] pb-10"><ActionButtons isMobileView={true} /></div>
         {stock.length > 0 && (
           <section className="w-full max-w-[260px] lg:hidden space-y-4 border-t border-white/5 pt-8 pb-12">
             <div className="text-white/40 font-bold text-[10px]">Archive</div>
             <div className="grid grid-cols-2 gap-3">
               {stock.map((item) => (
-                <div key={item.id} onClick={() => { setColors(item.colors); setAngle(item.angle); setTitle(item.title); setNoise(item.noise); window.scrollTo({top: 0, behavior: 'smooth'}); }} className="aspect-[9/16] bg-[#111] border border-white/5 relative group cursor-pointer hover:border-white/20 transition-all overflow-hidden">
+                <div key={item.id} onClick={() => { setColors(item.colors); setAngle(item.angle); setType(item.type || 'linear'); setCenterX(item.centerX || 50); setCenterY(item.centerY || 50); setTitle(item.title); setNoise(item.noise); window.scrollTo({top: 0, behavior: 'smooth'}); }} className="aspect-[9/16] bg-[#111] border border-white/5 relative group cursor-pointer hover:border-white/20 transition-all overflow-hidden">
                   <div className="w-full h-full" style={{ background: getGradientString(item.colors) }}></div>
                 </div>
               ))}
@@ -214,12 +241,11 @@ const App = () => {
         )}
       </main>
 
-      {/* PC時：アーカイブサイドバー */}
       {stock.length > 0 && (
         <aside className="hidden lg:flex w-[120px] h-full border-l border-white/10 flex-col bg-[#0a0a0a] overflow-y-auto p-4 gap-4 custom-scrollbar">
           <div className="text-white/20 font-bold text-[8px] uppercase tracking-widest text-center mb-2">Archive</div>
           {stock.map((item) => (
-            <div key={item.id} onClick={() => { setColors(item.colors); setAngle(item.angle); setTitle(item.title); setNoise(item.noise); }} className="w-full aspect-[2/3] bg-[#111] border border-white/5 relative cursor-pointer hover:border-white/40 transition-all overflow-hidden flex-shrink-0">
+            <div key={item.id} onClick={() => { setColors(item.colors); setAngle(item.angle); setType(item.type || 'linear'); setCenterX(item.centerX || 50); setCenterY(item.centerY || 50); setTitle(item.title); setNoise(item.noise); }} className="w-full aspect-[2/3] bg-[#111] border border-white/5 relative cursor-pointer hover:border-white/40 transition-all overflow-hidden flex-shrink-0">
               <div className="w-full h-full" style={{ background: getGradientString(item.colors) }}></div>
             </div>
           ))}
